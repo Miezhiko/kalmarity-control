@@ -10,7 +10,7 @@ use log::info; // , warn, error };
 use rdkafka::config::ClientConfig;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
-async fn produce(_cmd: &str, chan: u32, usr: u32, msg: u32, text: &str) {
+async fn produce(_cmd: &str, chan: u64, usr: u64, msg: u64, text: &str) {
   let producer: &FutureProducer = &ClientConfig::new()
     .set("bootstrap.servers", "localhost:9092")
     .set("message.timeout.ms", "5000")
@@ -73,9 +73,9 @@ let matches = App::new("kalmarity-control")
   .get_matches();
 
   let cmd         = matches.value_of("COMMAND").unwrap();
-  let chan : u32  = matches.value_of("CHANID").unwrap().parse().unwrap();
-  let usr : u32   = matches.value_of("USRID").unwrap_or("0").parse().unwrap();
-  let msg : u32   = matches.value_of("MSGID").unwrap_or("0").parse().unwrap();
+  let chan : u64  = matches.value_of("CHANID").unwrap().parse().unwrap();
+  let usr : u64   = matches.value_of("USRID").unwrap_or("0").parse().unwrap();
+  let msg : u64   = matches.value_of("MSGID").unwrap_or("0").parse().unwrap();
 
   let mut input = String::new();
   match io::stdin().read_line(&mut input) {
