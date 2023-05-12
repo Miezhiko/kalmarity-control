@@ -1,13 +1,16 @@
 [package]
 name = "kalmarity-control"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
 env_logger      = "0.10"
 log             = "0.4.17"
 anyhow          = "1"
-clap            = "3"
+
+[dependencies.clap]
+version = "4"
+features = ["derive", "color"]
 
 [dependencies.tokio]
 version = "1.28.0"

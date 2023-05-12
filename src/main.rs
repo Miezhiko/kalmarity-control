@@ -3,14 +3,35 @@ use env_logger::Env;
 use std::io;
 use std::time::Duration;
 
-use clap::{App, Arg};
-
-use log::info; // , warn, error };
+use log::{ info, error };
 
 use rdkafka::config::ClientConfig;
 use rdkafka::producer::{FutureProducer, FutureRecord};
 
-async fn produce(_cmd: &str, chan: u64, usr: u64, msg: u64, text: &str) {
+use clap::Parser;
+
+/// Kalmarity control util
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+  /// command to execute
+  #[arg(short, long)]
+  command: Option<String>,
+
+  /// channel id
+  #[arg(short, long, default_value_t = 0)]
+  channel: u64,
+
+  /// user id to mention
+  #[arg(short, long, default_value_t = 0)]
+  user: u64,
+
+  /// msg id to reply
+  #[arg(short, long, default_value_t = 0)]
+  msg: u64
+}
+
+async fn produce(args: Args, text: &str) {
   let producer: &FutureProducer = &ClientConfig::new()
     .set("bootstrap.servers", "localhost:9092")
     .set("message.timeout.ms", "5000")
@@ -18,7 +39,10 @@ async fn produce(_cmd: &str, chan: u64, usr: u64, msg: u64, text: &str) {
     .expect("Producer creation error");
 
   let future = async move {
-    let k_key = format!("{chan}|{usr}|{msg}");
+    let k_key = format!("{}|{}|{}"
+                       , args.channel
+                       , args.user
+                       , args.msg);
     let delivery_status = producer
       .send(
         FutureRecord::to("Kalmarity")
@@ -43,44 +67,12 @@ async fn main() -> anyhow::Result<()> {
               Env::default().default_filter_or("info")
             ).init();
 
-let matches = App::new("kalmarity-control")
-  .version("0.1.0")
-  .about("A simple kalmarity control util")
-  .arg(
-    Arg::new("COMMAND")
-        .help("The command to execute")
-        .required(true)
-        .index(1),
-  )
-  .arg(
-    Arg::new("CHANID")
-        .help("The channel ID")
-        .required(true)
-        .index(2),
-  )
-  .arg(
-    Arg::new("USRID")
-        .help("The user ID")
-        .required(false)
-        .index(3),
-  )
-  .arg(
-    Arg::new("MSGID")
-        .help("The message ID")
-        .required(false)
-        .index(4),
-  )
-  .get_matches();
-
-  let cmd         = matches.value_of("COMMAND").unwrap();
-  let chan : u64  = matches.value_of("CHANID").unwrap().parse().unwrap();
-  let usr : u64   = matches.value_of("USRID").unwrap_or("0").parse().unwrap();
-  let msg : u64   = matches.value_of("MSGID").unwrap_or("0").parse().unwrap();
+  let args = Args::parse();
 
   let mut input = String::new();
   match io::stdin().read_line(&mut input) {
-    Ok(_)       => produce(cmd, chan, usr, msg, input.trim()).await,
-    Err(error)  => println!("Error: {}", error)
+    Ok(_)       => produce(args, input.trim()).await,
+    Err(error)  => error!("Error: {}", error)
   }
 
   Ok(())
