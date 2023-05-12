@@ -14,8 +14,8 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-  /// command to execute
-  #[arg(short, long)]
+  /// command to execute (unused)
+  #[arg(long)]
   command: Option<String>,
 
   /// channel id
